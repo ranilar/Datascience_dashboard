@@ -1,0 +1,16 @@
+{
+  "medians": {
+    "sleep_hours": 7.0,
+    "stress_level": 5.0,
+    "daily_steps": 8645.0,
+    "heart_rate": 70.1,
+    "endurance_level": 9.46,
+    "bmi": 21.72,
+    "hydration_level": 2.5
+  },
+  "rows": {
+    "CLINICAL": 687701,
+    "WEARABLE": 36500,
+    "HARMONIZED": 724201
+  }
+}

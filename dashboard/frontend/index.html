@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wellness Assessment App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    .section-title { font-size: 0.95rem; font-weight: 600; }
+    .input-label { display: block; font-size: 0.8rem; font-weight: 500; }
+
+    .field, .btn {
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #ffffff;
+      color: inherit;
+      font-size: 0.75rem;
+    }
+    .field { padding: 4px 6px; }
+    .btn { padding: 4px 8px; }
+    .btn:hover { border-color: #64748b; }
+
+    #disclaimerDialog { max-width: 34rem; width: calc(100% - 2rem); border: 1px solid #cbd5e1; border-radius: 8px; padding: 0; }
+    #disclaimerDialog::backdrop { background: rgba(15, 23, 42, 0.4); }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      background: transparent;
+      margin: 6px 0;
+    }
+    input[type=range]:focus { outline: none; }
+    input[type=range]::-webkit-slider-runnable-track {
+      height: 3px;
+      cursor: pointer;
+      background: #1e293b;
+      border-radius: 2px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 14px;
+      width: 14px;
+      margin-top: -5.5px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid #1e293b;
+      cursor: pointer;
+    }
+    input[type=range]::-moz-range-track {
+      height: 3px;
+      cursor: pointer;
+      background: #1e293b;
+      border-radius: 2px;
+    }
+    input[type=range]::-moz-range-thumb {
+      height: 10px;
+      width: 10px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid #1e293b;
+      cursor: pointer;
+    }
+    input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px #bae6fd; }
+    input[type=range]:disabled { opacity: 0.45; }
+    input[type=range]:disabled::-webkit-slider-thumb { cursor: not-allowed; }
+  </style>
+</head>
+<body class="bg-white text-slate-900 min-h-screen flex flex-col font-sans">
+
+  <header class="border-b border-slate-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h1 class="text-base font-semibold">Wellness Assessment App</h1>
+      </div>
+
+      <div class="flex items-center flex-wrap gap-3 text-xs">
+        <label class="flex items-center gap-1.5">
+          <span class="text-slate-500">Dataset</span>
+          <select id="cohortSelector" onchange="onCohortChange()" class="field">
+            <option value="HARMONIZED" selected>Combined Datasets (N=724k)</option>
+            <option value="CLINICAL">Dataset 1: Plain (N=687k)</option>
+            <option value="WEARABLE">Dataset 2: Wearable (N=36.5k)</option>
+          </select>
+        </label>
+
+        <div class="flex items-center gap-1">
+          <span class="text-slate-500 mr-0.5">Examples</span>
+          <button onclick="applyPreset('burnout')" title="High stress, short sleep, low activity" class="btn">Non-athletic</button>
+          <button onclick="applyPreset('athlete')" title="High endurance, 15k steps, resting HR 55 bpm" class="btn">Athlete</button>
+        </div>
+
+        <button onclick="openDisclaimer()" class="btn" aria-haspopup="dialog">Info</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex-1 w-full">
+    <div id="apiErrorBanner" class="hidden mb-4 p-3 rounded border text-xs bg-rose-50 border-rose-200 text-rose-900"></div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 border border-slate-300 rounded-lg">
+
+      <section class="lg:col-span-5 p-5 border-b lg:border-b-0 lg:border-r border-slate-300 space-y-6">
+        <h2 class="text-xl font-semibold">Inputs</h2>
+
+        <div class="space-y-3">
+          <h3 class="section-title">Profile</h3>
+          <label class="block">
+            <span class="input-label">Biological sex</span>
+            <select id="userSex" onchange="onSexChange(this.value)" class="field w-full mt-1">
+              <option value="ALL">All Cohort Baseline</option>
+              <option value="M">Male</option>
+              <option value="F">Female</option>
+            </select>
+          </label>
+          <div>
+            <span class="input-label">Age: <span id="ageDisplay" class="font-mono">38</span> yrs</span>
+            <input type="range" id="userAge" min="18" max="65" step="1" value="38" oninput="onAgeChange(this.value)">
+          </div>
+          <div>
+            <span class="input-label">Workout: <span id="activeMinsDisplay" class="font-mono">75</span> min</span>
+            <input type="range" id="activeMinutes" min="0" max="180" step="5" value="75" oninput="onActiveMinutesChange(this.value)">
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="section-title">Measurements</h3>
+            <button onclick="resetToMedian()" class="btn">Reset</button>
+          </div>
+          <div id="slidersContainer" class="divide-y divide-slate-200"></div>
+        </div>
+      </section>
+
+      <section class="lg:col-span-7 p-5 space-y-6">
+        <h2 class="text-xl font-semibold">Results</h2>
+
+        <div class="flex items-center justify-between gap-4">
+          <h3 class="section-title">Well-being index</h3>
+          <p id="scoreIndex" class="text-2xl font-semibold font-mono">-- / 100 Index</p>
+        </div>
+
+        <div>
+          <div class="flex items-baseline justify-between gap-2 mb-2">
+            <h3 class="section-title">Comparison with data</h3>
+            <span class="text-xs text-slate-500" id="percentileCohortLabel">Combined Datasets</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="text-slate-500 border-b border-slate-300">
+                  <th class="py-1.5 font-medium">Metric</th>
+                  <th class="py-1.5 font-medium">Value</th>
+                  <th class="py-1.5 font-medium">Dataset Mean</th>
+                  <th class="py-1.5 font-medium">Z-Score</th>
+                  <th class="py-1.5 font-medium text-right">Population %</th>
+                </tr>
+              </thead>
+              <tbody id="percentilesTableBody" class="divide-y divide-slate-200 font-mono"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-baseline justify-between gap-2 mb-2">
+            <h3 class="section-title">Sub-scores</h3>
+            <span class="text-xs text-slate-500">0–100</span>
+          </div>
+          <div id="subScoresList" class="space-y-2"></div>
+        </div>
+
+        <div>
+          <h3 class="section-title mb-1">Sub-score balance</h3>
+          <div class="flex justify-center">
+            <canvas id="radarCanvas" width="280" height="250" class="w-full max-w-[280px] h-auto"></canvas>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="section-title mb-2">Summary</h3>
+          <p id="roiText" class="text-sm leading-relaxed border border-slate-300 rounded-lg p-3">
+            Evaluating behavioral leverage points...
+          </p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="py-4 text-center text-xs text-slate-400">
+    <p>Wellness Assessment App • Calibrated against Dataset 1: Plain (N=687k) & Dataset 2: Wearable (N=36.5k)</p>
+  </footer>
+
+  <dialog id="disclaimerDialog" aria-labelledby="disclaimerTitle">
+    <div class="p-5 space-y-3 text-sm leading-relaxed text-slate-700">
+      <h2 id="disclaimerTitle" class="text-base font-semibold text-slate-900">Disclaimer</h2>
+      <p class="font-medium text-slate-900">Your data will not be stored, but merely compared to the data we already have.</p>
+      <p>The app works by calculating a wellness score for each input parameter. The scores are then added together to provide you with an overall score for your well-being index.</p>
+      <p>Finally, you are given feedback on how you score against optimal values found from scientific literature, and how you could improve your scoring. This gives you a way to develop positive habits to improve your physical well-being. You can also compare your statistics to our data, and see how you rank within each metric.</p>
+      <form method="dialog" class="flex justify-end pt-1">
+        <button class="btn" autofocus>Close</button>
+      </form>
+    </div>
+  </dialog>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
