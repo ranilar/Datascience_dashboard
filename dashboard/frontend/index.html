@@ -118,26 +118,6 @@
       <section class="lg:col-span-5 p-5 border-b lg:border-b-0 lg:border-r border-slate-300 space-y-6">
         <h2 class="text-xl font-semibold">Inputs</h2>
 
-        <div class="space-y-3">
-          <h3 class="section-title">Profile</h3>
-          <label class="block">
-            <span class="input-label">Biological sex</span>
-            <select id="userSex" onchange="onSexChange(this.value)" class="field w-full mt-1">
-              <option value="ALL">All Cohort Baseline</option>
-              <option value="M">Male</option>
-              <option value="F">Female</option>
-            </select>
-          </label>
-          <div>
-            <span class="input-label">Age: <span id="ageDisplay" class="font-mono">38</span> yrs</span>
-            <input type="range" id="userAge" min="18" max="65" step="1" value="38" oninput="onAgeChange(this.value)">
-          </div>
-          <div>
-            <span class="input-label">Workout: <span id="activeMinsDisplay" class="font-mono">75</span> min</span>
-            <input type="range" id="activeMinutes" min="0" max="180" step="5" value="75" oninput="onActiveMinutesChange(this.value)">
-          </div>
-        </div>
-
         <div class="space-y-2">
           <div class="flex items-center justify-between gap-2">
             <h3 class="section-title">Measurements</h3>
@@ -201,10 +181,6 @@
 
     </div>
   </main>
-
-  <footer class="py-4 text-center text-xs text-slate-400">
-    <p>Wellness Assessment App • Calibrated against Dataset 1: Plain (N=687k) & Dataset 2: Wearable (N=36.5k)</p>
-  </footer>
 
   <dialog id="disclaimerDialog" aria-labelledby="disclaimerTitle">
     <div class="p-5 space-y-3 text-sm leading-relaxed text-slate-700">

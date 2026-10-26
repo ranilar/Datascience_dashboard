@@ -3,9 +3,7 @@ const API_BASE = (window.API_BASE || '').replace(/\/$/, '');
 let PARAM_SPECS = [];
 let COHORTS = {};
 let activeCohortKey = 'HARMONIZED';
-let userSex = 'ALL';
-let userAge = 38;
-let activeMinutes = 75;
+const userSex = 'ALL';
 const currentValues = {};
 let lastResult = null;
 
@@ -90,34 +88,11 @@ function formatMean(id, val) {
   return id === 'daily_steps' ? Math.round(val).toLocaleString() : val.toFixed(1);
 }
 
-function onSexChange(val) {
-  userSex = val;
-
-  if (userSex === 'M' && currentValues.hydration_level < 3.2) {
-    currentValues.hydration_level = 3.7;
-  } else if (userSex === 'F' && currentValues.hydration_level > 3.2) {
-    currentValues.hydration_level = 2.7;
-  }
-
-  renderSliders();
-  recalculateAll();
-}
-
 function onSliderChange(id, value) {
   currentValues[id] = parseFloat(value);
   const displayElem = document.getElementById(`display_${id}`);
   if (displayElem) displayElem.innerText = formatValue(id, currentValues[id]);
   recalculateAll();
-}
-
-function onAgeChange(val) {
-  userAge = parseInt(val);
-  document.getElementById('ageDisplay').innerText = userAge;
-}
-
-function onActiveMinutesChange(val) {
-  activeMinutes = parseInt(val);
-  document.getElementById('activeMinsDisplay').innerText = activeMinutes;
 }
 
 function onCohortChange() {
@@ -136,9 +111,6 @@ async function loadProfile(name) {
   try {
     const profile = await api(`/api/profiles/${encodeURIComponent(name)}?sex=${userSex}`);
     Object.assign(currentValues, profile.values);
-    activeMinutes = profile.active_minutes;
-    document.getElementById('activeMinutes').value = activeMinutes;
-    document.getElementById('activeMinsDisplay').innerText = activeMinutes;
     renderSliders();
     recalculateAll();
   } catch (err) {
