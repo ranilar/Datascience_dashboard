@@ -27,59 +27,47 @@ def hydration_target(sex):
     return {"target": 3.1, "low": 2.7, "high": 3.5, "label": "3.1 L (Dataset Norm)"}
 
 
+LOG_STEEPNESS = 9.0
+
+
+def log_score(distance, critical_distance, max_penalty=100.0):
+    closeness = min(1.0, max(0.0, 1 - distance / critical_distance))
+    return 100 - max_penalty * (1 - math.log10(1 + LOG_STEEPNESS * closeness) / math.log10(1 + LOG_STEEPNESS))
+
+
+def banded_score(param_id, val, low, high, below_penalty=100.0, above_penalty=100.0):
+    spec = SPECS_BY_ID[param_id]
+    if val < low:
+        return log_score(low - val, low - spec["min"], below_penalty)
+    if val > high:
+        return log_score(val - high, spec["max"] - high, above_penalty)
+    return 100.0
+
+
 def sub_score(param_id, val, sex):
     if param_id == "sleep_hours":
-        if 7.0 <= val <= 9.0:
-            return 100.0
-        if val < 7.0:
-            return max(0.0, 100 - math.pow((7.0 - val) / 1.5, 1.4) * 45)
-        return max(0.0, 100 - math.pow((val - 9.0) / 1.5, 1.4) * 50)
+        return banded_score(param_id, val, 7.0, 9.0)
 
     if param_id == "stress_level":
-        if 2.0 <= val <= 3.0:
-            return 100.0
         if val < 2.0:
             return 95.0
-        return max(5.0, 100 - ((val - 3.0) / 7.0) * 92)
+        return banded_score(param_id, val, 2.0, 3.0)
 
     if param_id == "daily_steps":
-        if 7000 <= val <= 10000:
-            return 100.0
-        if val < 7000:
-            return max(15.0, 100 - math.pow((7000 - val) / 5000, 1.25) * 78)
-        return max(82.0, 100 - ((val - 10000) / 12000) * 16)
+        return banded_score(param_id, val, 7000, 10000, above_penalty=16.0)
 
     if param_id == "heart_rate":
-        if val <= 60:
-            return 100.0
-        return max(10.0, 100 - math.pow((val - 60) / 5.5, 1.2) * 8.5)
+        return banded_score(param_id, val, 0, 60)
 
     if param_id == "endurance_level":
-        if val >= 18.0:
-            return 100.0
-        if val <= 4.0:
-            return 15.0
-        return max(15.0, 15 + math.pow((val - 4.0) / 14.0, 1.05) * 85)
+        return banded_score(param_id, val, 18.0, math.inf)
 
     if param_id == "bmi":
-        if 22.0 <= val <= 25.0:
-            return 100.0
-        if val > 25.0:
-            return 25.0 + (75.0 / (1.0 + math.pow((val - 25.0) / 8.0, 1.7)))
-        deficit = 22.0 - val
-        if val < 18.0:
-            return max(15.0, 100 - (deficit / 4.0) * 65)
-        return max(65.0, 100 - (deficit / 4.0) * 35)
+        return banded_score(param_id, val, 22.0, 25.0)
 
     if param_id == "hydration_level":
         target = hydration_target(sex)
-        if target["low"] <= val <= target["high"]:
-            return 100.0
-        if val < target["low"]:
-            deficit = (target["low"] - val) / 1.5
-            return max(10.0, 100 * math.exp(-0.45 * math.pow(deficit, 1.6)))
-        excess = (val - target["high"]) / 1.5
-        return max(35.0, 100 * math.exp(-0.35 * math.pow(excess, 1.5)))
+        return banded_score(param_id, val, target["low"], target["high"], above_penalty=20.0)
 
     return 50.0
 
